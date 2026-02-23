@@ -113,7 +113,7 @@ export default function App() {
         )}
       </header>
 
-      <main className="flex-1 p-4 md:p-6 flex flex-col lg:flex-row gap-6 relative">
+      <main className="flex-1 p-4 md:p-6 flex flex-col lg:flex-row lg:items-start gap-6 relative">
         
         <div className="flex-[2] flex flex-col items-center justify-start lg:sticky lg:top-6 lg:h-[calc(100vh-140px)]">
           <section className="w-full h-full bg-black rounded-2xl border border-slate-700 flex flex-col items-center justify-center min-h-[300px] overflow-hidden shadow-2xl relative">
@@ -125,7 +125,7 @@ export default function App() {
         </div>
 
         <div className="flex-[1] flex flex-col items-center lg:items-start justify-start w-full min-h-[calc(100vh-140px)]">
-          <section className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden shadow-2xl h-full min-h-[600px]">
+          <section className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden shadow-2xl h-[80vh] lg:h-[calc(100vh-120px)] min-h-[500px]">
             
             <div className="flex border-b border-slate-700 bg-slate-800/80 shrink-0">
               <div className="px-6 py-4 border-b-2 border-emerald-500 text-emerald-400 font-bold text-sm tracking-wide">
