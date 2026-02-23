@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { User, CheckCircle2, ChevronRight, Loader2, AlertTriangle, Check, MonitorPlay, LogOut } from 'lucide-react';
 import axios from 'axios';
 
-// Apontando para o laboratório local
-const API_URL = 'http://localhost:8000/api';
+// Aponta para a AWS na Vercel, ou para o localhost no seu PC
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.cliquevoto.com.br/api';
 
 export default function App() {
   const [etapa, setEtapa] = useState(1);
@@ -67,13 +67,13 @@ export default function App() {
   };
 
   if (loading && etapa === 1) return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+    <div className="h-screen bg-slate-900 flex items-center justify-center">
       <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
     </div>
   );
 
   if (erro) return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+    <div className="h-screen bg-slate-900 flex items-center justify-center p-4">
       <div className="bg-slate-800 p-6 rounded-2xl shadow-xl text-center border-t-4 border-red-500 max-w-md w-full">
         <AlertTriangle className="mx-auto text-red-500 mb-4 w-12 h-12" />
         <p className="font-bold text-slate-200">{erro}</p>
@@ -85,9 +85,10 @@ export default function App() {
   const candidatoRevisao = candidatos.find(c => c.id === candidatoSelecionado);
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 flex flex-col font-sans">
+    // Tela travada em 100vh no desktop
+    <div className="h-screen lg:overflow-hidden bg-slate-900 text-slate-200 flex flex-col font-sans">
       
-      <header className="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between shadow-sm z-50 relative">
+      <header className="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between shadow-sm z-50 shrink-0">
         <div className="flex items-center">
           {eleicao?.logo_url ? (
             <img src={eleicao.logo_url} alt="Logo do Cliente" className="h-10 object-contain" />
@@ -113,10 +114,11 @@ export default function App() {
         )}
       </header>
 
-      <main className="flex-1 p-4 md:p-6 flex flex-col lg:flex-row lg:items-start gap-6 relative">
+      <main className="flex-1 p-4 md:p-6 flex flex-col lg:flex-row gap-6 relative overflow-y-auto lg:overflow-hidden">
         
-        <div className="flex-[2] flex flex-col items-center justify-start lg:sticky lg:top-6 lg:h-[calc(100vh-140px)]">
-          <section className="w-full h-full bg-black rounded-2xl border border-slate-700 flex flex-col items-center justify-center min-h-[300px] overflow-hidden shadow-2xl relative">
+        {/* Coluna do Vídeo */}
+        <div className="flex-[2] flex flex-col items-center justify-start min-h-[300px] lg:h-full shrink-0 lg:shrink">
+          <section className="w-full h-full bg-black rounded-2xl border border-slate-700 flex flex-col items-center justify-center overflow-hidden shadow-2xl relative">
             <MonitorPlay className="w-16 h-16 text-slate-800 mb-4 absolute z-0" />
             <div className="w-full h-full absolute inset-0 flex flex-col items-center justify-center z-10 bg-black/60 backdrop-blur-sm">
                <p className="text-slate-300 font-medium text-lg tracking-wide bg-black/50 px-4 py-2 rounded-lg">Transmissão da Assembleia</p>
@@ -124,8 +126,9 @@ export default function App() {
           </section>
         </div>
 
-        <div className="flex-[1] flex flex-col items-center lg:items-start justify-start w-full min-h-[calc(100vh-140px)]">
-          <section className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden shadow-2xl h-[80vh] lg:h-[calc(100vh-120px)] min-h-[500px]">
+        {/* Coluna da Urna */}
+        <div className="flex-[1] flex flex-col items-center lg:items-start justify-start w-full lg:h-full min-h-0">
+          <section className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden shadow-2xl h-full flex-1">
             
             <div className="flex border-b border-slate-700 bg-slate-800/80 shrink-0">
               <div className="px-6 py-4 border-b-2 border-emerald-500 text-emerald-400 font-bold text-sm tracking-wide">
@@ -134,7 +137,8 @@ export default function App() {
               <div className="px-6 py-4 text-slate-500 font-medium text-sm tracking-wide cursor-not-allowed">RESULTADOS</div>
             </div>
 
-            <div className="p-6 flex-1 flex flex-col">
+            {/* min-h-0 aqui é o segredo para a rolagem interna funcionar */}
+            <div className="p-6 flex-1 flex flex-col min-h-0">
               
               {etapa !== 3 && (
                 <div className="flex justify-between items-start mb-8 shrink-0">
@@ -172,9 +176,11 @@ export default function App() {
               )}
 
               {etapa === 2 && (
-                <div className="space-y-4 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-300">
+                // min-h-0 novamente para barrar o crescimento infinito
+                <div className="space-y-4 flex-1 flex flex-col min-h-0 animate-in slide-in-from-right-4 duration-300">
                   <h3 className="text-slate-300 font-medium pb-2 border-b border-slate-700 shrink-0">Selecione uma opção:</h3>
                   
+                  {/* overflow-y-auto aqui faz a mágica acontecer */}
                   <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                     {candidatos.map(c => (
                       <button 
