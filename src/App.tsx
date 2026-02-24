@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { User, CheckCircle2, ChevronRight, Loader2, AlertTriangle, Check, MonitorPlay, LogOut, RefreshCw, BarChart3 } from 'lucide-react';
 import axios from 'axios';
 
-// Aponta para a AWS na Vercel, ou para o localhost no seu PC
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.cliquevoto.com.br/api';
+// A MÁGICA ACONTECE AQUI: Caminho relativo, pois o Nginx vai rotear /api para o Django
+const API_URL = '/api';
 
 export default function App() {
   const [etapa, setEtapa] = useState(1);
@@ -14,7 +14,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   
-  // Novos estados para a aba de Resultados
+  // Estados para a aba de Resultados
   const [aba, setAba] = useState<'votacao' | 'resultados'>('votacao');
   const [resultados, setResultados] = useState<any>(null);
   const [carregandoResultados, setCarregandoResultados] = useState(false);
@@ -41,7 +41,6 @@ export default function App() {
     carregarUrna();
   }, []);
 
-  // Função para buscar os resultados na API
   const carregarResultados = async () => {
     if (!eleicao) return;
     setCarregandoResultados(true);
@@ -134,7 +133,6 @@ export default function App() {
 
       <main className="flex-1 p-4 md:p-6 flex flex-col lg:flex-row gap-6 relative overflow-y-auto lg:overflow-hidden">
         
-        {/* Coluna do Vídeo */}
         <div className="flex-[2] flex flex-col items-center justify-start min-h-[300px] lg:h-full shrink-0 lg:shrink">
           <section className="w-full h-full bg-black rounded-2xl border border-slate-700 flex flex-col items-center justify-center overflow-hidden shadow-2xl relative">
             <MonitorPlay className="w-16 h-16 text-slate-800 mb-4 absolute z-0" />
@@ -144,11 +142,9 @@ export default function App() {
           </section>
         </div>
 
-        {/* Coluna da Urna */}
         <div className="flex-[1] flex flex-col items-center lg:items-start justify-start w-full lg:h-full min-h-0">
           <section className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden shadow-2xl h-full flex-1">
             
-            {/* Abas Superiores */}
             <div className="flex border-b border-slate-700 bg-slate-800/80 shrink-0">
               <button 
                 onClick={() => setAba('votacao')}
@@ -166,7 +162,6 @@ export default function App() {
 
             <div className="p-6 flex-1 flex flex-col min-h-0">
               
-              {/* === TELA DE VOTAÇÃO === */}
               {aba === 'votacao' && (
                 <>
                   {etapa !== 3 && (
@@ -315,7 +310,6 @@ export default function App() {
                 </>
               )}
 
-              {/* === TELA DE RESULTADOS === */}
               {aba === 'resultados' && (
                 <div className="flex-1 flex flex-col min-h-0 animate-in fade-in duration-300">
                   <div className="flex justify-between items-center mb-6 shrink-0">
@@ -342,7 +336,6 @@ export default function App() {
                         <div key={index} className="bg-slate-700/30 p-4 rounded-xl border border-slate-600 relative overflow-hidden group hover:border-slate-500 transition-colors">
                           <div className="flex justify-between items-center mb-3 relative z-10">
                             <div className="flex items-center gap-3">
-                              {/* Bolinha de Posição */}
                               <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-800 text-xs font-bold text-slate-400 border border-slate-600">
                                 {index + 1}º
                               </span>
@@ -354,7 +347,6 @@ export default function App() {
                             </div>
                           </div>
                           
-                          {/* Barra de Progresso */}
                           <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden shadow-inner relative z-10">
                             <div 
                               className="bg-gradient-to-r from-emerald-600 to-emerald-400 h-2.5 rounded-full transition-all duration-1000 ease-out" 
