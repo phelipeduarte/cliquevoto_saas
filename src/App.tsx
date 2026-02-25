@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { User, CheckCircle2, ChevronRight, Loader2, AlertTriangle, Check, MonitorPlay, LogOut, RefreshCw, BarChart3 } from 'lucide-react';
 import axios from 'axios';
 
-// A MÁGICA ACONTECE AQUI: Caminho relativo, pois o Nginx vai rotear /api para o Django
-const API_URL = '/api';
+// A MÁGICA ACONTECE AQUI
+// const API_URL = '/api';
+const API_URL = 'https://cliquevoto.com.br/api';
 
 export default function App() {
   const [etapa, setEtapa] = useState(1);
@@ -14,7 +15,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   
-  // Estados para a aba de Resultados
   const [aba, setAba] = useState<'votacao' | 'resultados'>('votacao');
   const [resultados, setResultados] = useState<any>(null);
   const [carregandoResultados, setCarregandoResultados] = useState(false);
@@ -41,17 +41,41 @@ export default function App() {
     carregarUrna();
   }, []);
 
-  const carregarResultados = async () => {
+  const carregarResultados = async (silencioso = false) => {
     if (!eleicao) return;
-    setCarregandoResultados(true);
+    if (!silencioso) setCarregandoResultados(true);
     try {
       const res = await axios.get(`${API_URL}/eleicoes/${eleicao.id}/resultados`);
       setResultados(res.data);
     } catch (err) {
       console.error("Erro ao carregar resultados", err);
     } finally {
-      setCarregandoResultados(false);
+      if (!silencioso) setCarregandoResultados(false);
     }
+  };
+
+  useEffect(() => {
+    let relogio: any;
+    if (aba === 'resultados' && eleicao) {
+      carregarResultados();
+      relogio = setInterval(() => {
+        carregarResultados(true);
+      }, 5000);
+    }
+    return () => {
+      if (relogio) clearInterval(relogio);
+    };
+  }, [aba, eleicao]);
+
+  // --- NOVA FUNÇÃO DE SEGURANÇA: Trava de Login ---
+  const handleAcessarPainel = () => {
+    // Verifica se o evento está fechado ou aguardando
+    if (eleicao?.status === 'aguardando' || eleicao?.aberta === false) {
+      alert(`⚠️ A Assembleia "${eleicao.titulo}" ainda não começou!\n\nAguarde o horário oficial de início para registrar sua presença e acessar a urna.`);
+      return;
+    }
+    
+    setEtapa(2);
   };
 
   const handleIrParaConfirmacao = () => {
@@ -107,12 +131,15 @@ export default function App() {
       
       <header className="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between shadow-sm z-50 shrink-0">
         <div className="flex items-center">
-          {eleicao?.logo_url ? (
-            <img src={eleicao.logo_url} alt="Logo do Cliente" className="h-10 object-contain" />
-          ) : (
-            <div className="h-10 px-4 bg-slate-700/50 rounded flex items-center justify-center border border-slate-600 border-dashed">
-              <span className="font-bold text-slate-400 text-sm tracking-widest">LOGO DO CLIENTE</span>
-            </div>
+          {/* AJUSTE AQUI: O logotipo do cabeçalho só aparece se a etapa for maior que 1 */}
+          {etapa > 1 && (
+            eleicao?.logo_url ? (
+              <img src={eleicao.logo_url} alt="Logo do Cliente" className="h-10 object-contain" />
+            ) : (
+              <div className="h-10 px-4 bg-slate-700/50 rounded flex items-center justify-center border border-slate-600 border-dashed">
+                <span className="font-bold text-slate-400 text-sm tracking-widest">LOGO DO CLIENTE</span>
+              </div>
+            )
           )}
         </div>
 
@@ -121,7 +148,7 @@ export default function App() {
             <User className="w-4 h-4 text-emerald-400" />
             <span className="text-sm font-medium text-slate-300 hidden sm:inline">CPF: {cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}</span>
             <button 
-              onClick={() => { setEtapa(1); setCpf(''); setCandidatoSelecionado(null); }} 
+              onClick={() => { setEtapa(1); setCpf(''); setCandidatoSelecionado(null); setAba('votacao'); }} 
               title="Sair" 
               className="ml-2 text-slate-400 hover:text-red-400 transition-colors"
             >
@@ -131,40 +158,44 @@ export default function App() {
         )}
       </header>
 
-      <main className="flex-1 p-4 md:p-6 flex flex-col lg:flex-row gap-6 relative overflow-y-auto lg:overflow-hidden">
+      <main className={`flex-1 p-4 md:p-6 flex relative overflow-y-auto lg:overflow-hidden ${etapa === 1 ? 'flex-col items-center justify-center' : 'flex-col lg:flex-row gap-6'}`}>
         
-        <div className="flex-[2] flex flex-col items-center justify-start min-h-[300px] lg:h-full shrink-0 lg:shrink">
-          <section className="w-full h-full bg-black rounded-2xl border border-slate-700 flex flex-col items-center justify-center overflow-hidden shadow-2xl relative">
-            <MonitorPlay className="w-16 h-16 text-slate-800 mb-4 absolute z-0" />
-            <div className="w-full h-full absolute inset-0 flex flex-col items-center justify-center z-10 bg-black/60 backdrop-blur-sm">
-               <p className="text-slate-300 font-medium text-lg tracking-wide bg-black/50 px-4 py-2 rounded-lg">Transmissão da Assembleia</p>
-            </div>
-          </section>
-        </div>
+        {etapa !== 1 && (
+          <div className="w-full lg:flex-[2] flex flex-col items-center justify-start min-h-[300px] lg:h-full shrink-0 lg:shrink">
+            <section className="w-full h-full bg-black rounded-2xl border border-slate-700 flex flex-col items-center justify-center overflow-hidden shadow-2xl relative">
+              <MonitorPlay className="w-16 h-16 text-slate-800 mb-4 absolute z-0" />
+              <div className="w-full h-full absolute inset-0 flex flex-col items-center justify-center z-10 bg-black/60 backdrop-blur-sm">
+                 <p className="text-slate-300 font-medium text-lg tracking-wide bg-black/50 px-4 py-2 rounded-lg">Transmissão da Assembleia</p>
+              </div>
+            </section>
+          </div>
+        )}
 
-        <div className="flex-[1] flex flex-col items-center lg:items-start justify-start w-full lg:h-full min-h-0">
-          <section className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden shadow-2xl h-full flex-1">
+        <div className={`w-full flex flex-col justify-start min-h-0 ${etapa === 1 ? 'max-w-md items-center' : 'lg:flex-[1] items-center lg:items-start lg:h-full'}`}>
+          <section className={`w-full bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden shadow-2xl flex-1 ${etapa !== 1 ? 'lg:h-full' : ''}`}>
             
-            <div className="flex border-b border-slate-700 bg-slate-800/80 shrink-0">
-              <button 
-                onClick={() => setAba('votacao')}
-                className={`px-6 py-4 font-bold text-sm tracking-wide transition-colors ${aba === 'votacao' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/50'}`}
-              >
-                VOTAÇÃO
-              </button>
-              <button 
-                onClick={() => { setAba('resultados'); carregarResultados(); }}
-                className={`px-6 py-4 font-bold text-sm tracking-wide transition-colors flex items-center gap-2 ${aba === 'resultados' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/50'}`}
-              >
-                <BarChart3 className="w-4 h-4" /> RESULTADOS
-              </button>
-            </div>
+            {etapa !== 1 && (
+              <div className="flex border-b border-slate-700 bg-slate-800/80 shrink-0">
+                <button 
+                  onClick={() => setAba('votacao')}
+                  className={`px-6 py-4 font-bold text-sm tracking-wide transition-colors ${aba === 'votacao' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/50'}`}
+                >
+                  VOTAÇÃO
+                </button>
+                <button 
+                  onClick={() => setAba('resultados')}
+                  className={`px-6 py-4 font-bold text-sm tracking-wide transition-colors flex items-center gap-2 ${aba === 'resultados' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/50'}`}
+                >
+                  <BarChart3 className="w-4 h-4" /> RESULTADOS
+                </button>
+              </div>
+            )}
 
             <div className="p-6 flex-1 flex flex-col min-h-0">
               
               {aba === 'votacao' && (
                 <>
-                  {etapa !== 3 && (
+                  {etapa !== 1 && etapa !== 3 && (
                     <div className="flex justify-between items-start mb-8 shrink-0">
                       <div>
                         <h2 className="text-xl font-bold text-white mb-1 leading-tight">{eleicao?.titulo || "Carregando..."}</h2>
@@ -177,9 +208,27 @@ export default function App() {
                   )}
 
                   {etapa === 1 && (
-                    <div className="space-y-6 flex-1 flex flex-col justify-center animate-in fade-in duration-300">
-                      <div className="space-y-2">
-                        <label className="text-slate-400 text-sm font-medium">Digite seu CPF para acessar a urna</label>
+                    <div className="space-y-6 flex-1 flex flex-col justify-center animate-in zoom-in-95 duration-500">
+                      
+                      <div className="text-center mb-4">
+                        {/* O logotipo central da tela de login permanece aqui */}
+                        {eleicao?.logo_url && (
+                          <img src={eleicao.logo_url} alt="Logo" className="h-24 mx-auto object-contain mb-6 drop-shadow-xl" />
+                        )}
+                        <h2 className="text-3xl font-bold text-white mb-2 leading-tight">{eleicao?.titulo || "Assembleia"}</h2>
+                        <p className="text-slate-400 font-medium text-lg mb-6">{eleicao?.organizacao_nome}</p>
+                        
+                        {(eleicao?.data_inicio || eleicao?.hora_inicio) && (
+                          <div className="inline-block px-5 py-3 bg-slate-900 border border-slate-700 rounded-xl shadow-inner">
+                            <p className="text-sm text-emerald-400 font-medium tracking-wide">
+                              ⏳ Início oficial: {eleicao?.data_inicio} {eleicao?.hora_inicio && `às ${eleicao.hora_inicio}`}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-2 border-t border-slate-700/50 pt-8">
+                        <label className="text-slate-400 text-sm font-medium text-center block mb-4">Digite seu CPF para credenciamento</label>
                         <input 
                           type="text" 
                           placeholder="Somente números"
@@ -189,8 +238,9 @@ export default function App() {
                           maxLength={11}
                         />
                       </div>
+                      
                       <button 
-                        onClick={() => setEtapa(2)}
+                        onClick={handleAcessarPainel} 
                         disabled={cpf.length < 11}
                         className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed flex justify-center items-center hover:bg-emerald-500 transition-colors"
                       >
@@ -300,7 +350,7 @@ export default function App() {
                          <p className="text-sm text-slate-500">Comprovante gerado com sucesso para o CPF final {cpf.slice(-2)}.</p>
                       </div>
                       <button 
-                        onClick={() => { setEtapa(1); setCpf(''); setCandidatoSelecionado(null); }} 
+                        onClick={() => { setEtapa(1); setCpf(''); setCandidatoSelecionado(null); setAba('votacao'); }} 
                         className="mt-8 px-6 py-4 bg-slate-700 font-bold text-emerald-400 rounded-xl hover:bg-slate-600 transition-colors w-full"
                       >
                         Voltar ao Início
@@ -318,9 +368,9 @@ export default function App() {
                       <p className="text-sm text-slate-400">Acompanhe os votos computados</p>
                     </div>
                     <button 
-                      onClick={carregarResultados} 
+                      onClick={() => carregarResultados(false)} 
                       className="p-3 bg-slate-700/50 rounded-xl hover:bg-slate-700 border border-slate-600 text-emerald-400 transition-all shadow-sm"
-                      title="Atualizar Apuração"
+                      title="Atualizar Apuração Manualmente"
                     >
                       <RefreshCw className={`w-5 h-5 ${carregandoResultados ? 'animate-spin' : ''}`} />
                     </button>
