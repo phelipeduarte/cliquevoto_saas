@@ -3,6 +3,7 @@ Django settings for core project.
 """
 
 from pathlib import Path
+import os  # TRUQUE DE ARQUITETURA: Para ler qual sistema operacional estamos usando
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,11 +39,15 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://cliquevoto-saas.vercel.app",
+    "https://cliquevoto.com.br",
+    "https://www.cliquevoto.com.br",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://cliquevoto-saas.vercel.app",
     "https://api.cliquevoto.com.br",
+    "https://cliquevoto.com.br",
+    "https://www.cliquevoto.com.br",
 ]
 ROOT_URLCONF = 'core.urls'
 
@@ -64,16 +69,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'cliquevoto_db',
-        'USER': 'admin',
-        'PASSWORD': 'password123',
-        'HOST': 'db', 
-        'PORT': '5432',
+# TRUQUE DE ARQUITETURA: Identifica onde o código está rodando
+if os.name == 'nt': 
+    # Se o sistema for 'nt' (Windows), usa o banco local SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    # Se for Linux/Docker (AWS), usa o banco oficial PostgreSQL
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'cliquevoto_db',
+            'USER': 'admin',
+            'PASSWORD': 'password123',
+            'HOST': 'db', 
+            'PORT': '5432',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},

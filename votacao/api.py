@@ -1,7 +1,7 @@
 from ninja import NinjaAPI, Schema
 from django.shortcuts import get_object_or_404
 from .models import Evento, Opcao, Eleitor, Voto
-
+from django.db.models import Count
 api = NinjaAPI(title="CliqueVoto API")
 
 class VotoSchema(Schema):
@@ -52,3 +52,24 @@ def registrar_voto(request, payload: VotoSchema):
     eleitor.save()
 
     return {"sucesso": True, "mensagem": "Voto computado com sucesso!"}
+
+@api.get("/eleicoes/{evento_id}/resultados")
+def ver_resultados(request, evento_id: str):
+    # Busca o evento e conta os votos de cada opção
+    opcoes = Opcao.objects.filter(evento_id=evento_id).annotate(
+        total_votos=Count('voto')
+    ).order_by('-total_votos')
+    
+    total_geral = Voto.objects.filter(evento_id=evento_id).count()
+
+    return {
+        "total_geral": total_geral,
+        "ranking": [
+            {
+                "nome": o.nome,
+                "votos": o.total_votos,
+                "porcentagem": round((o.total_votos / total_geral * 100), 2) if total_geral > 0 else 0,
+                "foto_url": o.foto_url
+            } for o in opcoes
+        ]
+    }
