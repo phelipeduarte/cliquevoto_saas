@@ -4,7 +4,11 @@ import axios from 'axios';
 
 // A MÁGICA ACONTECE AQUI
 // const API_URL = '/api';
-const API_URL = 'https://cliquevoto.com.br/api';
+// A MÁGICA ACONTECE AQUI
+// const API_URL = 'https://cliquevoto.com.br/api';
+//const API_URL = 'http://localhost:8000/api'; // Apontando para o seu Django Local!
+const API_URL = 'https://api.cliquevoto.com.br/api';
+
 
 export default function App() {
   const [etapa, setEtapa] = useState(1);
