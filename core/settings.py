@@ -3,13 +3,16 @@ Django settings for core project.
 """
 
 from pathlib import Path
-import os  # TRUQUE DE ARQUITETURA: Para ler qual sistema operacional estamos usando
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-cliquevoto-super-secret-key-12345'
-DEBUG = True
+
+# Lê a variável de ambiente, se não existir, assume True (Local)
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
@@ -69,9 +72,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# TRUQUE DE ARQUITETURA: Identifica onde o código está rodando
-if os.name == 'nt': 
-    # Se o sistema for 'nt' (Windows), usa o banco local SQLite
+# TRUQUE DE ARQUITETURA ATUALIZADO: Separação por Ambiente (DEBUG)
+if DEBUG: 
+    # Ambiente Local (Seu notebook Samsung): usa o banco local SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -79,7 +82,7 @@ if os.name == 'nt':
         }
     }
 else:
-    # Se for Linux/Docker (AWS), usa o banco oficial PostgreSQL
+    # Produção (Servidor AWS / Docker): usa o banco oficial PostgreSQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
