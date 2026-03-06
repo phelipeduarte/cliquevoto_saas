@@ -39,14 +39,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# AJUSTE CIRÚRGICO: IP da sua rede adicionado na lista VIP!
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://192.168.18.129:5173",
     "https://cliquevoto-saas.vercel.app",
     "https://cliquevoto.com.br",
     "https://www.cliquevoto.com.br",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
+    "http://192.168.18.129:5173",
+    "http://192.168.18.129:8000",
     "https://cliquevoto-saas.vercel.app",
     "https://api.cliquevoto.com.br",
     "https://cliquevoto.com.br",
